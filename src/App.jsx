@@ -1,203 +1,141 @@
-import React, { useState, useEffect } from 'react';
-import { ShieldCheck, FileDown, CheckCircle2, AlertTriangle, Send, UserCheck } from 'lucide-react';
-
-const SCRIPT_URL_QR = "PEGAR_AQUI_LA_URL_DE_LA_WEB_APP_DEL_NUEVO_GAS";
-
-export default function AppQR() {
-  const [globalFiles, setGlobalFiles] = useState({ inf: '', med: '' });
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [successSent, setSuccessSent] = useState(false);
-
-  const [formData, setFormData] = useState({
-    nombre: '',
-    dni: '',
-    empresa: '',
-    conformidad: false
-  });
-
-  useEffect(() => {
-    fetch(SCRIPT_URL_QR)
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === "success") {
-          setGlobalFiles(data.globalFiles);
-        }
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Error cargando archivos:", err);
-        setLoading(false);
-      });
-  }, []);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.conformidad) {
-      alert("Debes marcar la casilla de aceptación y declaración responsable.");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const response = await fetch(SCRIPT_URL_QR, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(formData)
-      });
-      const result = await response.json();
-
-      if (result.status === "success") {
-        setSuccessSent(true);
-      } else {
-        alert("Error: " + (result.message || "No se pudo registrar el acceso"));
-      }
-    } catch (err) {
-      console.error("Error:", err);
-      alert("Error de conexión.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (successSent) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 font-sans text-white">
-        <div className="bg-white text-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center space-y-4">
-          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
-            <CheckCircle2 className="w-10 h-10" />
-          </div>
-          <h2 className="text-2xl font-bold">¡Acceso Validado!</h2>
-          <p className="text-sm text-slate-600">
-            Tus datos y tu declaración de conformidad han sido registrados correctamente. Ya puedes acceder al centro de trabajo con total seguridad.
-          </p>
-          <div className="pt-4">
-            <button 
-              onClick={() => { setSuccessSent(false); setFormData({ nombre: '', dni: '', empresa: '', conformidad: false }); }}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition"
-            >
-              Registrar otro acceso
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+// ==========================================
+// PÁGINA WEB: MEDIDAS DE EMERGENCIA (MED)
+// URL: neurlamed.vercel.app
+// ==========================================
+if (currentView === 'med') {
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-800 p-4 max-w-lg mx-auto justify-center">
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden border">
+    <div className="min-h-screen bg-slate-900 py-6 px-4 font-sans text-slate-100 flex justify-center">
+      <div className="bg-slate-800 border border-slate-700 rounded-3xl shadow-2xl overflow-hidden max-w-2xl w-full flex flex-col">
         
-        {/* Cabecera */}
-        <div className="bg-slate-800 text-white p-6 text-center space-y-2">
-          <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mx-auto shadow-lg">
-            <ShieldCheck className="w-7 h-7 text-white" />
+        {/* Cabecera de la página */}
+        <div className="bg-purple-700 text-white p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-purple-600">
+          <div className="flex items-center space-x-3">
+            <div className="bg-white/20 p-2.5 rounded-2xl">
+              <Flame className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-black tracking-wide uppercase">Medidas de Emergencia y Evacuación</h1>
+              <p className="text-xs text-purple-200">Grupo Neural • Protocolo para Empresas Proveedoras y Externas</p>
+            </div>
           </div>
-          <h1 className="text-xl font-bold">Grupo Neural</h1>
-          <p className="text-xs text-slate-300">Control de Acceso y PRL para Trabajadores</p>
+          <button 
+            onClick={() => setCurrentView('form')}
+            className="bg-white hover:bg-purple-50 text-purple-900 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-md"
+          >
+            <ArrowLeft className="w-4 h-4" /> Volver al formulario
+          </button>
         </div>
 
-        <div className="p-6 space-y-6">
+        {/* Contenido Ampliado y Estructurado */}
+        <div className="p-6 sm:p-8 space-y-6 text-xs sm:text-sm leading-relaxed text-slate-300 overflow-y-auto max-h-[75vh]">
           
-          {/* Paso 1: Descarga de Documentos */}
-          <div className="space-y-3">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Paso 1: Consulta obligatoria previa
-            </h2>
-            
-            <div className="grid grid-cols-1 gap-2.5">
-              <a 
-                href={globalFiles.inf || "#"} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                onClick={(e) => { if(!globalFiles.inf) { e.preventDefault(); alert("Documento no disponible temporalmente."); } }}
-                className="p-3.5 bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 rounded-xl text-xs font-bold flex items-center justify-between transition shadow-sm"
-              >
-                <span className="flex items-center gap-2"><FileDown className="w-4 h-4" /> Información de Riesgos a Terceros</span>
-                <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded">Ver PDF</span>
-              </a>
+          {/* Introducción */}
+          <div className="bg-purple-950/40 border border-purple-800/60 p-4 rounded-2xl text-purple-200">
+            <p className="font-semibold">
+              Las empresas proveedoras, contratistas y cualquier personal externo que accedan a las instalaciones deberán conocer y cumplir estrictamente las medidas de emergencia establecidas en el centro de trabajo.
+            </p>
+          </div>
 
-              <a 
-                href={globalFiles.med || "#"} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                onClick={(e) => { if(!globalFiles.med) { e.preventDefault(); alert("Documento no disponible temporalmente."); } }}
-                className="p-3.5 bg-purple-50 text-purple-800 border border-purple-200 hover:bg-purple-100 rounded-xl text-xs font-bold flex items-center justify-between transition shadow-sm"
-              >
-                <span className="flex items-center gap-2"><FileDown className="w-4 h-4" /> Medidas de Emergencia</span>
-                <span className="text-[10px] bg-purple-600 text-white px-2 py-0.5 rounded">Ver PDF</span>
-              </a>
+          {/* 1. Actuación General */}
+          <div className="space-y-3">
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider border-b border-slate-700 pb-2 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 bg-purple-500 rounded-full"></span> 1. Actuación General ante Emergencias
+            </h2>
+            <ul className="list-disc pl-5 space-y-2 text-slate-300 text-xs bg-slate-900/60 p-4 rounded-xl border border-slate-700">
+              <li><strong className="text-white">Mantener la calma</strong> en todo momento y no generar alarma innecesaria.</li>
+              <li>Comunicar inmediatamente cualquier incidente, accidente, incendio o situación de riesgo al personal responsable del centro.</li>
+              <li>Seguir en todo momento las instrucciones de la Persona Responsable de Emergencia o de los equipos de intervención.</li>
+              <li>No asumir riesgos innecesarios ni actuar sin la formación o autorización adecuada.</li>
+              <li>Facilitar en todo lo posible la intervención de los servicios de emergencia externos.</li>
+            </ul>
+          </div>
+
+          {/* 2. Prevención de Incendios y Actuación */}
+          <div className="space-y-3">
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider border-b border-slate-700 pb-2 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 bg-amber-500 rounded-full"></span> 2. Prevención y Actuación en Caso de Incendio
+            </h2>
+            <div className="grid grid-cols-1 gap-3">
+              <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-700">
+                <h3 className="font-bold text-white text-xs mb-1">Medidas Preventivas</h3>
+                <p className="text-slate-400 text-xs">Mantenga el orden y la limpieza. No sobrecargue enchufes ni manipule instalaciones. Nunca obstaculice salidas de emergencia, recorridos de evacuación ni extintores. Mantenga materiales combustibles alejados de focos de calor.</p>
+              </div>
+              <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-700">
+                <h3 className="font-bold text-white text-xs mb-1">En caso de Conato de Incendio</h3>
+                <p className="text-slate-400 text-xs">Aseviro / avise inmediatamente al personal responsable. Si el fuego es pequeño y dispone de formación, utilice el extintor más próximo sin poner en riesgo su integridad. Si el peligro es elevado, evacúe la zona cerrando puertas y ventanas a su paso.</p>
+              </div>
             </div>
           </div>
 
-          <hr />
-
-          {/* Paso 2: Formulario y Declaración */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Paso 2: Datos y Declaración Responsable
+          {/* 3. Proceso de Evacuación */}
+          <div className="space-y-3">
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider border-b border-slate-700 pb-2 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span> 3. Normas de Evacuación
             </h2>
+            <ul className="list-disc pl-5 space-y-2 text-slate-300 text-xs bg-slate-900/60 p-4 rounded-xl border border-slate-700">
+              <li>Abandonar el edificio de forma ordenada, rápida y sin correr.</li>
+              <li>Utilizar exclusivamente las vías de evacuación debidamente señalizadas.</li>
+              <li><strong className="text-white">Queda terminantemente prohibido utilizar los ascensores.</strong></li>
+              <li>No detenerse bajo ningún concepto a recoger objetos personales.</li>
+              <li>Dirigirse directamente al Punto de Reunión Exterior y permanecer allí hasta recibir instrucciones. No reingresar al edificio hasta que se avise oficialmente que es seguro.</li>
+            </ul>
+          </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Nombre y Apellidos</label>
-              <input 
-                type="text" 
-                required
-                className="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="Ej. Juan Pérez García"
-                value={formData.nombre}
-                onChange={e => setFormData({...formData, nombre: e.target.value})}
-              />
+          {/* 4. Primeros Auxilios, Derrames y Amenazas */}
+          <div className="space-y-3">
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider border-b border-slate-700 pb-2 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 bg-blue-500 rounded-full"></span> 4. Incidentes, Primeros Auxilios y Sustancias
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-700">
+                <h3 className="font-bold text-white text-xs mb-1">Primeros Auxilios</h3>
+                <p className="text-slate-400 text-xs">Aplique la regla PAS: Proteger, Avisar y Socorrer. No mueva a heridos graves salvo riesgo inminente y solicite asistencia médica.</p>
+              </div>
+              <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-700">
+                <h3 className="font-bold text-white text-xs mb-1">Paquetes Suspectos</h3>
+                <p className="text-slate-400 text-xs">No manipule objetos extraños. Aleje a las personas del área e informe de inmediato al responsable de seguridad.</p>
+              </div>
+              <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-700">
+                <h3 className="font-bold text-white text-xs mb-1">Derrames Químicos</h3>
+                <p className="text-slate-400 text-xs">Avise al responsable. No intervenga sin EPIs ni formación específica. Evite fuentes de ignición y contacto directo.</p>
+              </div>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">DNI / NIE</label>
-              <input 
-                type="text" 
-                required
-                className="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="Ej. 12345678X"
-                value={formData.dni}
-                onChange={e => setFormData({...formData, dni: e.target.value})}
-              />
+          {/* 5. Teléfonos de Emergencia */}
+          <div className="space-y-3">
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider border-b border-slate-700 pb-2 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 bg-rose-500 rounded-full"></span> 5. Teléfonos de Emergencia Clave
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+              <div className="bg-rose-950/50 border border-rose-800/60 p-3 rounded-xl">
+                <span className="block text-rose-300 text-[10px] uppercase font-bold">Emergencias / Médico</span>
+                <span className="text-lg font-black text-white">112</span>
+              </div>
+              <div className="bg-slate-900/60 border border-slate-700 p-3 rounded-xl">
+                <span className="block text-slate-400 text-[10px] uppercase font-bold">Policía Nacional</span>
+                <span className="text-lg font-black text-white">091</span>
+              </div>
+              <div className="bg-slate-900/60 border border-slate-700 p-3 rounded-xl">
+                <span className="block text-slate-400 text-[10px] uppercase font-bold">Policía Local</span>
+                <span className="text-lg font-black text-white">092</span>
+              </div>
+              <div className="bg-slate-900/60 border border-slate-700 p-3 rounded-xl">
+                <span className="block text-slate-400 text-[10px] uppercase font-bold">Guardia Civil</span>
+                <span className="text-lg font-black text-white">062</span>
+              </div>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Empresa Contratista</label>
-              <input 
-                type="text" 
-                required
-                className="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="Ej. Montajes Eléctricos S.L."
-                value={formData.empresa}
-                onChange={e => setFormData({...formData, empresa: e.target.value})}
-              />
-            </div>
-
-            {/* Checkbox Legal */}
-            <div className="p-4 bg-slate-50 border rounded-xl space-y-2">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  required
-                  className="w-5 h-5 mt-0.5 text-blue-600 rounded focus:ring-blue-500 shrink-0"
-                  checked={formData.conformidad}
-                  onChange={e => setFormData({...formData, conformidad: e.target.checked})}
-                />
-                <span className="text-xs text-slate-600 leading-relaxed">
-                  Declaro bajo mi responsabilidad que he recibido, leído y comprendido la información de riesgos y medidas de emergencia, y que dispongo de los **EPIs adecuados, formación preventiva y aptitud médica (VS)** en vigor para los trabajos a realizar.
-                </span>
-              </label>
-            </div>
-
+          {/* Botón inferior de confirmación y retorno */}
+          <div className="pt-4 border-t border-slate-700">
             <button 
-              type="submit" 
-              disabled={submitting}
-              className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-lg flex items-center justify-center gap-2 transition"
+              onClick={() => setCurrentView('form')}
+              className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white font-black rounded-2xl text-sm shadow-lg shadow-purple-900/50 transition flex items-center justify-center gap-2"
             >
-              <UserCheck className="w-5 h-5" /> {submitting ? 'Validando acceso...' : 'Validar y Confirmar Acceso'}
+              <CheckCircle2 className="w-5 h-5" /> He leído y comprendido - Volver al formulario
             </button>
-          </form>
+          </div>
 
         </div>
       </div>
